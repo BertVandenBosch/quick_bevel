@@ -3,7 +3,7 @@ import bgl
 import blf
 
 
-def draw_callback_px(self, context):
+def draw_line(self, context):
 
     bgl.glEnable(bgl.GL_BLEND)
     bgl.glBegin(bgl.GL_LINES)
@@ -26,11 +26,21 @@ class ModalDrawOperator(bpy.types.Operator):
         if event.type == 'MOUSEMOVE':
             self.mousex = event.mouse_region_x
             self.mousey = event.mouse_region_y
-            self.mouse_path.append((event.mouse_region_x, event.mouse_region_y))
 
         elif event.type == 'LEFTMOUSE':
-            bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
-            return {'FINISHED'}
+            if event.value == 'PRESS':
+                self.mousex0 = event.mouse_region_x
+                self.mousey0 = event.mouse_region_y
+
+                self.mousex = self.mousex0
+                self.mousey = self.mousey0
+
+                args = (self, context)
+                self._handle = bpy.types.SpaceView3D.draw_handler_add(draw_line, args, 'WINDOW', 'POST_PIXEL')
+
+            if event.value == 'RELEASE':
+                bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
+                return {'FINISHED'}
 
         elif event.type in {'RIGHTMOUSE', 'ESC'}:
             bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
@@ -39,20 +49,18 @@ class ModalDrawOperator(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def invoke(self, context, event):
-        self.mousex0 = event.mouse_region_x
-        self.mousey0 = event.mouse_region_y
+        self.mousex0 = None
+        self.mousey0 = None
 
-        self.mousex = self.mousex0
-        self.mousey = self.mousey0
+        self.mousex = None
+        self.mousey = None
 
         if context.area.type == 'VIEW_3D':
             # the arguments we pass the the callback
-            args = (self, context)
+            # args = (self, context)
             # Add the region OpenGL drawing callback
             # draw in view space with 'POST_VIEW' and 'PRE_VIEW'
-            self._handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback_px, args, 'WINDOW', 'POST_PIXEL')
-
-            self.mouse_path = []
+            # self._handle = bpy.types.SpaceView3D.draw_handler_add(draw_line, args, 'WINDOW', 'POST_PIXEL')
 
             context.window_manager.modal_handler_add(self)
             return {'RUNNING_MODAL'}
