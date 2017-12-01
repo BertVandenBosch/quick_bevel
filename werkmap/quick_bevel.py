@@ -5,7 +5,7 @@ from math import sqrt, pi, cos, sin
 
 
 # TODO:
-# bgl stuff: mousestarting point + dotted line?
+# bgl stuff: text
 # add extra segments
 # add short-cut keybindings
 # to addon-form
@@ -28,7 +28,7 @@ def draw_circle(self, context, rad, res):
 
         i += pi * 2 / res
 
-    bgl.glEnd() 
+    bgl.glEnd()
     bgl.glPopAttrib()
 
     bgl.glDisable(bgl.GL_BLEND)
@@ -72,9 +72,9 @@ class QuickBevel(bpy.types.Operator):
         self.mousex0 = None
         self.mousey0 = None
 
-        self.dist = None
-
         self.curMod = None
+        self.dist = None
+        self.segments = 1
 
         # GL variables
 
@@ -126,6 +126,18 @@ class QuickBevel(bpy.types.Operator):
                 self.remove_handlers()
                 return {'FINISHED'}
 
+        if event.type in {'WHEELUPMOUSE', 'PAGE_UP', 'NUMPAD_PLUS'}:
+            self.segments += 1
+            self.execute(context)
+
+        if event.type in {'WHEELDOWNMOUSE', 'PAGE_DOWN', 'NUMPAD_MINUS'}:
+            if self.segments > 0:
+                self.segments -= 1
+                self.execute(context)
+
+        if event.type == 'MIDDLEMOUSE':
+            return {'PASS_TROUGH'}
+
         if event.type in {'ESC', 'RIGHTMOUSE'}:
             self.remove_handlers()
             return {'CANCELLED'}
@@ -135,6 +147,7 @@ class QuickBevel(bpy.types.Operator):
     def execute(self, context):
         if self.curMod is not None:
             self.curMod.width = self.dist
+            self.curMod.segments = self.segments
         return {'FINISHED'}
 
     ###### Custom methods ######
