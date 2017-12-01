@@ -4,16 +4,30 @@ import blf
 
 
 def draw_line(self, context):
-
+    
+    bgl.glPushAttrib(bgl.GL_ENABLE_BIT)
+    
     bgl.glEnable(bgl.GL_BLEND)
+
+    # style
+    bgl.glLineWidth(3)
+    bgl.glColor4f(1.0, 1.0, 1.0, 0.4)
+    bgl.glLineStipple(3, 0xAAAA)
+    bgl.glEnable(bgl.GL_LINE_STIPPLE)
+
     bgl.glBegin(bgl.GL_LINES)
 
     bgl.glVertex2i(self.mousex0, self.mousey0)
     bgl.glVertex2i(self.mousex, self.mousey)
 
     bgl.glEnd()
+    bgl.glPopAttrib()
 
     bgl.glDisable(bgl.GL_BLEND)
+
+    # reset style
+    bgl.glLineWidth(1)
+    bgl.glColor4f(1.0, 1.0, 1.0, 10)
 
 class ModalDrawOperator(bpy.types.Operator):
     """Draw a line with the mouse"""
