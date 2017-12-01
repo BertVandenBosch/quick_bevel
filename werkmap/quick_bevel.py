@@ -1,11 +1,12 @@
 import bpy
 import bgl
-import blf
-import math
+
+from math import sqrt, pi, cos, sin
 
 
 # TODO:
 # bgl stuff: mousestarting point + dotted line?
+# add extra segments
 # add short-cut keybindings
 # to addon-form
 # improve undo
@@ -13,6 +14,50 @@ import math
 class ObjectProps(bpy.types.PropertyGroup):
     index = bpy.props.IntProperty(default=0)
 
+
+def draw_circle(self, context, rad, res):
+    bgl.glPushAttrib(bgl.GL_ENABLE_BIT)
+
+    bgl.glEnable(bgl.GL_BLEND)
+
+    bgl.glBegin(bgl.GL_LINE_LOOP)
+
+    i = 0
+    while i < 2 * pi:
+        bgl.glVertex2f(self.gl_mousex0 + rad * cos(i), self.gl_mousey0 + rad * sin(i))
+
+        i += pi * 2 / res
+
+    bgl.glEnd() 
+    bgl.glPopAttrib()
+
+    bgl.glDisable(bgl.GL_BLEND)
+
+def draw_line(self, context):
+    bgl.glPushAttrib(bgl.GL_ENABLE_BIT)
+
+    bgl.glEnable(bgl.GL_BLEND)
+
+    # style
+    bgl.glLineWidth(3)
+    bgl.glColor4f(1.0, 1.0, 1.0, 0.4)
+    bgl.glLineStipple(3, 0xAAAA)
+
+    bgl.glEnable(bgl.GL_LINE_STIPPLE)
+
+    bgl.glBegin(bgl.GL_LINES)
+
+    bgl.glVertex2i(self.gl_mousex0, self.gl_mousey0)
+    bgl.glVertex2i(self.gl_mousex, self.gl_mousey)
+
+    bgl.glEnd()
+    bgl.glPopAttrib()
+
+    bgl.glDisable(bgl.GL_BLEND)
+
+    # reset style
+    bgl.glLineWidth(1)
+    bgl.glColor4f(1.0, 1.0, 1.0, 10)
 
 class QuickBevel(bpy.types.Operator):
     bl_label = "Quick Undestructive Bevel"
@@ -31,19 +76,34 @@ class QuickBevel(bpy.types.Operator):
 
         self.curMod = None
 
-        # self.setUp()
+        # GL variables
 
-        context.window_manager.modal_handler_add(self)
+        self.gl_mousex0 = None
+        self.gl_mousey0 = None
+
+        self.gl_mousex = None
+        self.gl_mousey = None
+
+        if context.area.type == 'VIEW_3D':
+            context.window_manager.modal_handler_add(self)
+
+        else:
+            self.report({'WARNING'}, "View3D not found, cannot run operator")
+            return {'CANCELLED'}
 
         return {'RUNNING_MODAL'}
 
     def modal(self, context, event):
+        context.area.tag_redraw()
 
         if event.type == 'MOUSEMOVE':
             if None not in {self.mousex0, self.mousey0}:
-                self.dist = math.sqrt((event.mouse_x - self.mousex0) ** 2 + (event.mouse_y - self.mousey0) ** 2) / 100
+                self.dist = sqrt((event.mouse_x - self.mousex0) ** 2 + (event.mouse_y - self.mousey0) ** 2) / 100
 
                 self.execute(context)
+
+            self.gl_mousex = event.mouse_region_x
+            self.gl_mousey = event.mouse_region_y
 
             return {'RUNNING_MODAL'}
 
@@ -55,13 +115,19 @@ class QuickBevel(bpy.types.Operator):
 
                 self.dist = 0
 
+                self.gl_mousex0 = event.mouse_region_x
+                self.gl_mousey0 = event.mouse_region_y
+
                 self.setUp()
+                self.add_handlers(context)
                 self.execute(context)
 
             if event.value == 'RELEASE':
+                self.remove_handlers()
                 return {'FINISHED'}
 
         if event.type in {'ESC', 'RIGHTMOUSE'}:
+            self.remove_handlers()
             return {'CANCELLED'}
 
         return {'RUNNING_MODAL'}
@@ -105,6 +171,20 @@ class QuickBevel(bpy.types.Operator):
         self.curMod = new_mod
 
         self.obj.bevel_settings.index += 1
+
+    # GL methods
+    def add_handlers(self, context):
+        args = (self, context)
+
+        self._handle0 = bpy.types.SpaceView3D.draw_handler_add(draw_line, args, 'WINDOW', 'POST_PIXEL')
+
+        args = (self, context, 8, 9)
+        self._handle1 = bpy.types.SpaceView3D.draw_handler_add(draw_circle, args, 'WINDOW', 'POST_PIXEL')
+
+    def remove_handlers(self):
+        bpy.types.SpaceView3D.draw_handler_remove(self._handle0, 'WINDOW')
+
+        bpy.types.SpaceView3D.draw_handler_remove(self._handle1, 'WINDOW')
 
 
 def register():
