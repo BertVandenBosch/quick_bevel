@@ -1,7 +1,25 @@
 import bpy
 import bgl
 import blf
+from math import pi, cos, sin
 
+def draw_circle(self, context, rad, res):
+    bgl.glPushAttrib(bgl.GL_ENABLE_BIT)
+
+    bgl.glEnable(bgl.GL_BLEND)
+
+    bgl.glBegin(bgl.GL_LINE_LOOP)
+
+    i = 0
+    while i < 2*pi:
+        bgl.glVertex2f( self.mousex0 + rad * cos(i), self.mousey0 + rad * sin(i))
+
+        i += pi * 2/res
+
+    bgl.glEnd()
+    bgl.glPopAttrib()
+
+    bgl.glDisable(bgl.GL_BLEND)
 
 def draw_line(self, context):
     
@@ -13,6 +31,7 @@ def draw_line(self, context):
     bgl.glLineWidth(3)
     bgl.glColor4f(1.0, 1.0, 1.0, 0.4)
     bgl.glLineStipple(3, 0xAAAA)
+
     bgl.glEnable(bgl.GL_LINE_STIPPLE)
 
     bgl.glBegin(bgl.GL_LINES)
@@ -49,15 +68,14 @@ class ModalDrawOperator(bpy.types.Operator):
                 self.mousex = self.mousex0
                 self.mousey = self.mousey0
 
-                args = (self, context)
-                self._handle = bpy.types.SpaceView3D.draw_handler_add(draw_line, args, 'WINDOW', 'POST_PIXEL')
+                self.add_handlers(context)
 
             if event.value == 'RELEASE':
-                bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
+                self.remove_handlers()
                 return {'FINISHED'}
 
         elif event.type in {'RIGHTMOUSE', 'ESC'}:
-            bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
+            self.remove_handlers()
             return {'CANCELLED'}
 
         return {'RUNNING_MODAL'}
@@ -70,17 +88,24 @@ class ModalDrawOperator(bpy.types.Operator):
         self.mousey = None
 
         if context.area.type == 'VIEW_3D':
-            # the arguments we pass the the callback
-            # args = (self, context)
-            # Add the region OpenGL drawing callback
-            # draw in view space with 'POST_VIEW' and 'PRE_VIEW'
-            # self._handle = bpy.types.SpaceView3D.draw_handler_add(draw_line, args, 'WINDOW', 'POST_PIXEL')
-
             context.window_manager.modal_handler_add(self)
             return {'RUNNING_MODAL'}
         else:
             self.report({'WARNING'}, "View3D not found, cannot run operator")
             return {'CANCELLED'}
+
+    def add_handlers(self, context):
+        args = (self, context)
+
+        self._handle0 = bpy.types.SpaceView3D.draw_handler_add(draw_line, args, 'WINDOW', 'POST_PIXEL')
+
+        args = (self, context, 8, 9)
+        self._handle1 = bpy.types.SpaceView3D.draw_handler_add(draw_circle, args, 'WINDOW', 'POST_PIXEL')
+
+    def remove_handlers(self):
+        bpy.types.SpaceView3D.draw_handler_remove(self._handle0, 'WINDOW')
+
+        bpy.types.SpaceView3D.draw_handler_remove(self._handle1, 'WINDOW')
 
 
 def register():
