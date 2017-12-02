@@ -127,13 +127,21 @@ class QuickBevel(bpy.types.Operator):
                 return {'FINISHED'}
 
         if event.type in {'WHEELUPMOUSE', 'PAGE_UP', 'NUMPAD_PLUS'}:
-            self.segments += 1
+            if event.type in {'PAGE_UP', 'NUMPAD_PLUS'}:
+                if event.value == 'RELEASE':
+                    self.segments += 1
+            else:
+                self.segments += 1
             self.execute(context)
 
         if event.type in {'WHEELDOWNMOUSE', 'PAGE_DOWN', 'NUMPAD_MINUS'}:
             if self.segments > 0:
-                self.segments -= 1
-                self.execute(context)
+                if event.type in {'PAGE_DOWN', 'NUMPAD_MINUS'}:
+                    if event.value == 'RELEASE':
+                        self.segments -= 1
+                else:
+                    self.segments -= 1
+            self.execute(context)
 
         if event.type == 'MIDDLEMOUSE':
             return {'PASS_TROUGH'}
