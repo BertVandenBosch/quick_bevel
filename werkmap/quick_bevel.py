@@ -157,6 +157,7 @@ class QuickBevel(bpy.types.Operator):
             self.curMod.width = self.dist
             self.curMod.segments = self.segments
         return {'FINISHED'}
+    
 
     ###### Custom methods ######
 
