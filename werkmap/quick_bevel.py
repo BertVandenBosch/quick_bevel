@@ -179,6 +179,7 @@ class QuickBevel(bpy.types.Operator):
                 # Create the modifier
                 new_mod = self.obj.modifiers.new(curBevel, 'BEVEL')
                 new_mod.use_clamp_overlap = False
+                new_mod.show_expanded = False
 
                 self.curMod = new_mod
 
@@ -205,6 +206,7 @@ class QuickBevel(bpy.types.Operator):
         new_mod.limit_method = 'VGROUP'
         new_mod.vertex_group = curBevel
         new_mod.use_clamp_overlap = False
+        new_mod.show_expanded = False
 
         self.curMod = new_mod
 
