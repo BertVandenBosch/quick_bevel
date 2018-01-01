@@ -5,11 +5,7 @@ from math import sqrt, pi, cos, sin
 
 
 # TODO:
-# bgl stuff: text
-# add extra segments
-# add short-cut keybindings
 # to addon-form
-# improve undo
 
 class ObjectProps(bpy.types.PropertyGroup):
     index = bpy.props.IntProperty(default=0)
@@ -168,6 +164,26 @@ class QuickBevel(bpy.types.Operator):
             bpy.types.Object.bevel_settings = bpy.props.PointerProperty(type=ObjectProps)
             self.obj.bevel_settings.index = 0
 
+        # No vertex group when in object mode
+        if self.obj.mode == 'OBJECT':
+            curBevel = 'Bevel_main'
+
+            self.curMod = [mod for mod in self.obj.modifiers if mod.name == curBevel]
+            if len(self.curMod) != 0:
+                self.curMod = self.curMod[0]
+
+                # Do not reset amount of segments
+                self.segments = self.curMod.segments
+
+            else:
+                # Create the modifier
+                new_mod = self.obj.modifiers.new(curBevel, 'BEVEL')
+                new_mod.use_clamp_overlap = False
+
+                self.curMod = new_mod
+
+            return
+
         curBevel = 'Bevel_' + str(self.obj.bevel_settings.index)
 
         # Create the vertex group
@@ -176,6 +192,7 @@ class QuickBevel(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='OBJECT')
         self.obj.update_from_editmode()
 
+        # Create the vertex group
         verts = [v.index for v in self.obj.data.vertices if v.select]
 
         new_group.add(verts, 1, 'REPLACE')
@@ -187,7 +204,6 @@ class QuickBevel(bpy.types.Operator):
         # Modifier settings:
         new_mod.limit_method = 'VGROUP'
         new_mod.vertex_group = curBevel
-        # new_mod.offset_type = 'PERCENT'
         new_mod.use_clamp_overlap = False
 
         self.curMod = new_mod
