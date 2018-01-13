@@ -2,10 +2,16 @@ import bpy
 import bgl
 
 from math import sqrt, pi, cos, sin
+# Addon info
 
-
-# TODO:
-# to addon-form
+bl_info = {
+    'name': 'Quick Undestructive Bevel',
+    'author': 'Bert Van den Bosch',
+    'version': (1, 0, 0),
+    'blender': (2, 7, 9),
+    'location': '3D View > SpacebarMenu > Quick Bevel',
+    'description': 'Model with undestructe bevel modifiers and vertex maps',
+    'category': 'Mesh'}
 
 class ObjectProps(bpy.types.PropertyGroup):
     index = bpy.props.IntProperty(default=0)
@@ -231,7 +237,6 @@ def register():
     bpy.utils.register_class(QuickBevel)
     bpy.utils.register_class(ObjectProps)
 
-
-# Run the register module when this file gets called from itself
-if __name__ == '__main__':
-    register()
+def unregister():
+    bpy.utils.unregister_class(QuickBevel)
+    bpy.utils.unregister_class(ObjectProps)
