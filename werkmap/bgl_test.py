@@ -1,6 +1,7 @@
 import bpy
 import bgl
 import blf
+from mathutils import Vector
 from math import pi, cos, sin
 
 def draw_circle(self, context, rad, res):
@@ -8,13 +9,23 @@ def draw_circle(self, context, rad, res):
 
     bgl.glEnable(bgl.GL_BLEND)
 
-    bgl.glBegin(bgl.GL_LINE_LOOP)
+    bgl.glBegin(bgl.GL_LINES)
 
-    i = 0
-    while i < 2*pi:
-        bgl.glVertex2f( self.mousex0 + rad * cos(i), self.mousey0 + rad * sin(i))
+    # i = 0
+    # while i < 2*pi:
+    #     # bgl.glVertex2f( self.mousex0 + rad * cos(i), self.mousey0 + rad * sin(i))
+    #     #
+    #     # i += pi * 2/res
+    #
+    #     bgl.glVertex3f(rad * cos(i), rad * sin(i), 10)
+    #
+    #     i += pi * 2/res
 
-        i += pi * 2/res
+    start = Vector((0,1,0))
+    end = Vector((1,0,0))
+
+    bgl.glVertex3f(0,0,0)
+    bgl.glVertex3f(1,0,0)
 
     bgl.glEnd()
     bgl.glPopAttrib()
@@ -36,8 +47,8 @@ def draw_line(self, context):
 
     bgl.glBegin(bgl.GL_LINES)
 
-    bgl.glVertex2i(self.mousex0, self.mousey0)
-    bgl.glVertex2i(self.mousex, self.mousey)
+    bgl.glVertex2f(self.mousex0, self.mousey0)
+    bgl.glVertex2f(self.mousex, self.mousey)
 
     bgl.glEnd()
     bgl.glPopAttrib()
@@ -99,7 +110,7 @@ class ModalDrawOperator(bpy.types.Operator):
 
         self._handle0 = bpy.types.SpaceView3D.draw_handler_add(draw_line, args, 'WINDOW', 'POST_PIXEL')
 
-        args = (self, context, 8, 9)
+        args = (self, context, 15, 9)
         self._handle1 = bpy.types.SpaceView3D.draw_handler_add(draw_circle, args, 'WINDOW', 'POST_PIXEL')
 
     def remove_handlers(self):
